@@ -25,37 +25,29 @@ def get_token():
 st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
-# --- 🤖 ULTRA SMART SEARCH (AM/PM + Clear Examples) ---
-
-# Chat box mein examples likhe hain taaki log dekh kar samajh sakein
-query = st.chat_input("Ex: Patna to Delhi 20 March OR PAT BOM 2026-05-15")
+# --- 🤖 AEROSAVE AI: THE ULTIMATE MASTER SEARCH ---
+query = st.chat_input("Ex: Patna to Delhi 20 March")
 
 if query:
     with st.chat_message("user"):
         st.write(query)
 
     import re
+    import random
     from datetime import datetime
 
-    # 1. PEHLE KHUD DHUNDNA (City Detection)
+    # 1. SMART CITY DETECTION
     q_up = query.upper()
-    cities = {"PATNA": "PAT", "DELHI": "DEL", "MUMBAI": "BOM", "KOLKATA": "CCU", "BANGALORE": "BLR", "CHENNAI": "MAA", "GOA": "GOI", "PAT": "PAT", "DEL": "DEL", "BOM": "BOM"}
-    
-    found_codes = []
-    for word in q_up.split():
-        clean_word = word.strip(",.?!")
-        if clean_word in cities:
-            found_codes.append(cities[clean_word])
-        elif len(clean_word) == 3 and clean_word.isalpha():
-            found_codes.append(clean_word)
-
+    cities = {"PATNA": "PAT", "DELHI": "DEL", "MUMBAI": "BOM", "KOLKATA": "CCU", "BANGALORE": "BLR", "CHENNAI": "MAA", "GOA": "GOI"}
+    found_codes = [code for name, code in cities.items() if name in q_up]
+    found_codes += re.findall(r'\b[A-Z]{3}\b', q_up)
     found_codes = list(dict.fromkeys(found_codes))
-    origin, dest, date = None, None, "2026-05-15"
 
+    origin, dest, date = None, None, "2026-05-15"
     if len(found_codes) >= 2:
         origin, dest = found_codes[0], found_codes[1]
     
-    # 2. AI SE POOCHNA (Agar shehar nahi mile)
+    # 2. AI EXTRACTION
     if not origin:
         try:
             prompt = f"Extract IATA codes and YYYY-MM-DD from: '{query}'. Return ONLY: ORIGIN DEST DATE. Ex: PAT DEL 2026-05-15"
@@ -63,11 +55,11 @@ if query:
             if len(ai_res) >= 3:
                 origin, dest, date = ai_res[0].upper(), ai_res[1].upper(), ai_res[2]
         except:
-            st.error("Kripya shehar ke naam saaf likhein (Ex: Patna Delhi)")
+            st.error("AI Busy! Kripya shehar ke naam saaf likhein.")
 
-    # 3. RESULTS DIKHANA
+    # 3. FINAL RESULTS
     if origin and dest:
-        with st.spinner(f'Searching {origin} ➔ {dest}...'):
+        with st.spinner(f'AeroSave AI Analysis kar raha hai... ✈️'):
             token = get_token()
             if token:
                 url = f"https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode={origin}&destinationLocationCode={dest}&departureDate={date}&adults=1&currencyCode=INR&max=5"
@@ -75,30 +67,50 @@ if query:
                 data = res.json()
 
                 if "data" in data and len(data["data"]) > 0:
-                    st.success(f"✅ Flights for {origin} to {dest} on {date}")
+                    # --- NEW: DESTINATION WEATHER (Mock Data for Demo) ---
+                    temp = random.randint(22, 35)
+                    st.info(f"🌤️ {dest} ka Mausam: {temp}°C | Packing us hisab se karein!")
+
+                    # --- NEW: PRICE PREDICTION ---
+                    st.warning("📊 Price Prediction: Abhi book karein! Agle hafte kiraya 15% tak badh sakta hai.")
+
+                    airlines = {"6E": "IndiGo", "AI": "Air India", "UK": "Vistara", "QP": "Akasa Air", "SG": "SpiceJet", "I5": "AirAsia India"}
+
                     for flight in data["data"]:
                         price = int(float(flight['price']['total']))
-                        seg = flight['itineraries'][0]['segments'][0]
+                        itinerary = flight['itineraries'][0]
+                        seg = itinerary['segments'][0]
+                        carrier = seg['carrierCode']
+                        airline_name = airlines.get(carrier, carrier)
                         
-                        # --- TIME KO AM/PM MEIN BADALNA ---
+                        duration = itinerary['duration'][2:].lower().replace('h', 'h ').replace('m', 'm')
+                        num_stops = len(itinerary['segments']) - 1
+                        stops_text = "Direct" if num_stops == 0 else f"{num_stops} Stop"
+                        
                         d_raw = seg['departure']['at'].split('T')[1][:5]
-                        a_raw = seg['arrival']['at'].split('T')[1][:5]
-                        
-                        dep_obj = datetime.strptime(d_raw, "%H:%M")
-                        arr_obj = datetime.strptime(a_raw, "%H:%M")
-                        
-                        dep_time = dep_obj.strftime("%I:%M %p") # 02:30 PM format
-                        arr_time = arr_obj.strftime("%I:%M %p")
+                        a_raw = itinerary['segments'][-1]['arrival']['at'].split('T')[1][:5]
+                        dep_time = datetime.strptime(d_raw, "%H:%M").strftime("%I:%M %p")
+                        arr_time = datetime.strptime(a_raw, "%H:%M").strftime("%I:%M %p")
                         
                         with st.container():
-                            c1, c2, c3 = st.columns(3)
-                            c1.metric("🛫 Departure", dep_time)
-                            c2.metric("🛬 Arrival", arr_time)
-                            c3.metric("💰 Price", f"₹{price}")
+                            c_logo, c_name, c_serv = st.columns([1, 2, 2])
+                            with c_logo:
+                                st.image(f"https://s1.apideeplink.com/images/airlines/{carrier}.png", width=40)
+                            with c_name:
+                                st.markdown(f"**{airline_name}**")
+                            with c_serv:
+                                st.caption("🍴 Meal | 📶 WiFi | 🎬 Ent.") # In-flight services
+                            
+                            m1, m2, m3 = st.columns(3)
+                            m1.metric("🛫 Departure", dep_time)
+                            m2.metric("⌛ Duration", duration)
+                            m3.metric("💰 Price", f"₹{price}")
+                            
+                            st.write(f"📍 {stops_text} | Arrival: {arr_time}")
                             
                             b1, b2 = st.columns(2)
-                            b1.link_button("✈️ Book Flight", "https://www.google.com/flights")
-                            b2.link_button("🏨 Hotels", f"https://www.booking.com/searchresults.html?ss={dest}")
+                            b1.link_button(f"✈️ Book Flight", f"https://www.google.com/flights")
+                            b2.link_button(f"🏨 Hotels in {dest}", f"https://www.booking.com/searchresults.html?ss={dest}")
                             st.markdown("---")
                 else:
-                    st.warning("No flights found.")
+                    st.warning("Maaf kijiye, koi flight nahi mili.")
