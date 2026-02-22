@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import google.generativeai as genai
 
-# --- APNI KEYS YAHAN BHAREIN (Puraani vali hi use karein) ---
+# API Configuration
 AMADEUS_KEY = "iAo2G7nXdvKgiZzp011sEHZc6HAmPQ8C"
 AMADEUS_SECRET = "yxG7clA4v002gkZG"
 GEMINI_KEY = "AIzaSyCc9mYj-xpwK9nexV-GX4SQoxA-TqwbfKY"
@@ -19,7 +19,7 @@ def get_token():
 
 st.set_page_config(page_title="AI Flight Bot", layout="centered")
 st.title("✈️ Smart AI Flight Assistant")
-st.write("100 Premium Users Access Only")
+st.write("AeroSave AI")
 
 query = st.chat_input("Ex: Delhi to Patna on 25 March")
 
