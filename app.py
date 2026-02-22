@@ -25,21 +25,26 @@ def get_token():
 st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
-# --- 🤖 SMART AI DIMAAG (Gemini NLP) ---
+# --- 🤖 SMART AI FLIGHT SEARCH SECTION ---
+query = st.chat_input("Kahan jana hai? (Example: Delhi to Patna on 25 May)")
+
+if query:
+    with st.chat_message("user"):
+        st.write(query)
+
+    # AI ko instruction dena
     prompt = f"""
-    You are a flight assistant. Analyze this user query: '{query}'.
-    Extract these 3 things and return ONLY them separated by a single space:
+    Analyze this query: '{query}'. Extract and return ONLY 3 words separated by space:
     1. Origin Airport IATA Code (3 letters)
     2. Destination Airport IATA Code (3 letters)
-    3. Departure Date (format: YYYY-MM-DD)
-    
-    If no year is mentioned, use 2026. If no date is mentioned, use 2026-05-15.
-    Output Example: DEL PAT 2026-05-25
+    3. Departure Date (YYYY-MM-DD)
+    If no year is mentioned, use 2026. If no date, use 2026-05-15.
+    Example: DEL PAT 2026-05-25
     """
     
     try:
         with st.spinner('Aapki baat samajh raha hoon... ✨'):
-            # AI extraction (English/Hindi/Hinglish sab samjhega)
+            # Gemini AI se city codes aur date nikalwana
             ai_response = model.generate_content(prompt).text.strip().split()
             
             if len(ai_response) >= 3:
@@ -47,36 +52,38 @@ st.markdown("---")
                 
                 token = get_token()
                 if token:
+                    # Amadeus API se sasti flights dhoondna
                     url = f"https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode={origin}&destinationLocationCode={dest}&departureDate={date}&adults=1&currencyCode=INR&max=5"
                     response = requests.get(url, headers={"Authorization": f"Bearer {token}"})
                     data = response.json()
 
                     with st.chat_message("assistant"):
                         if "data" in data and len(data["data"]) > 0:
-                            st.success(f"✅ Hame {origin} se {dest} ki best deals mili hain!")
+                            st.success(f"✅ {origin} se {dest} ki best deals mili hain!")
                             for flight in data["data"]:
                                 price = flight['price']['total']
                                 
-                                # --- PREMIUM INTERFACE CARDS ---
+                                # Sundar Card Design
                                 with st.container():
                                     c1, c2 = st.columns([3, 1])
                                     with c1:
                                         st.markdown(f"#### ✈️ {origin} ➔ {dest}")
-                                        st.caption(f"📅 Date: {date} | Economy Class")
+                                        st.caption(f"📅 Date: {date} | Economy")
                                     with c2:
                                         st.subheader(f"₹{price}")
                                     
-                                    btn_col1, btn_col2 = st.columns(2)
-                                    with btn_col1:
-                                        st.link_button("✈️ Book Flight", f"https://www.google.com/flights?q=flights+from+{origin}+to+{dest}+on+{date}")
-                                    with btn_col2:
+                                    # Booking aur Hotel ke Buttons
+                                    b1, b2 = st.columns(2)
+                                    with b1:
+                                        st.link_button("✈️ Book Flight", f"https://www.google.com/flights")
+                                    with b2:
                                         st.link_button(f"🏨 Hotels in {dest}", f"https://www.booking.com/searchresults.html?ss={dest}")
                                     st.markdown("---")
                         else:
                             st.warning(f"Maaf kijiye, {origin} se {dest} ke liye flights nahi mili.")
                 else:
-                    st.error("API Key issue! Keys check karein.")
+                    st.error("API Key Issue! Keys check karein.")
             else:
-                st.error("Kripya shehar aur date sahi se likhein.")
+                st.error("Kripya shehar ka naam sahi se likhein.")
     except Exception as e:
-        st.error("AI is busy, please try again in a moment.")
+        st.error("AI is busy, please try again.")
