@@ -25,7 +25,7 @@ def get_token():
 st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
-# --- 🤖 AEROSAVE AI: THE ULTIMATE MASTER SEARCH ---
+# --- 🤖 AEROSAVE AI: THE PRO TRAVEL ASSISTANT ---
 query = st.chat_input("Ex: Patna to Delhi 20 March")
 
 if query:
@@ -67,16 +67,16 @@ if query:
                 data = res.json()
 
                 if "data" in data and len(data["data"]) > 0:
-                    # --- NEW: DESTINATION WEATHER (Mock Data for Demo) ---
-                    temp = random.randint(22, 35)
-                    st.info(f"🌤️ {dest} ka Mausam: {temp}°C | Packing us hisab se karein!")
-
-                    # --- NEW: PRICE PREDICTION ---
-                    st.warning("📊 Price Prediction: Abhi book karein! Agle hafte kiraya 15% tak badh sakta hai.")
+                    # Sort data for Tags
+                    all_flights = data["data"]
+                    min_price = min(int(float(f['price']['total'])) for f in all_flights)
+                    # Simple duration comparison logic
+                    
+                    st.info(f"🌤️ {dest} Weather: {random.randint(22, 32)}°C | 📊 Prediction: Prices might rise, book soon!")
 
                     airlines = {"6E": "IndiGo", "AI": "Air India", "UK": "Vistara", "QP": "Akasa Air", "SG": "SpiceJet", "I5": "AirAsia India"}
 
-                    for flight in data["data"]:
+                    for flight in all_flights:
                         price = int(float(flight['price']['total']))
                         itinerary = flight['itineraries'][0]
                         seg = itinerary['segments'][0]
@@ -84,33 +84,35 @@ if query:
                         airline_name = airlines.get(carrier, carrier)
                         
                         duration = itinerary['duration'][2:].lower().replace('h', 'h ').replace('m', 'm')
-                        num_stops = len(itinerary['segments']) - 1
-                        stops_text = "Direct" if num_stops == 0 else f"{num_stops} Stop"
+                        num_stops = "Direct" if len(itinerary['segments']) == 1 else f"{len(itinerary['segments'])-1} Stop"
                         
-                        d_raw = seg['departure']['at'].split('T')[1][:5]
-                        a_raw = itinerary['segments'][-1]['arrival']['at'].split('T')[1][:5]
-                        dep_time = datetime.strptime(d_raw, "%H:%M").strftime("%I:%M %p")
-                        arr_time = datetime.strptime(a_raw, "%H:%M").strftime("%I:%M %p")
+                        d_time = datetime.strptime(seg['departure']['at'].split('T')[1][:5], "%H:%M").strftime("%I:%M %p")
+                        a_time = datetime.strptime(itinerary['segments'][-1]['arrival']['at'].split('T')[1][:5], "%H:%M").strftime("%I:%M %p")
                         
                         with st.container():
+                            # Tags Logic
+                            col_t1, col_t2 = st.columns([1,1])
+                            if price == min_price:
+                                col_t1.success("🏷️ Cheapest (Sasta Ticket)")
+                            
                             c_logo, c_name, c_serv = st.columns([1, 2, 2])
                             with c_logo:
                                 st.image(f"https://s1.apideeplink.com/images/airlines/{carrier}.png", width=40)
                             with c_name:
                                 st.markdown(f"**{airline_name}**")
                             with c_serv:
-                                st.caption("🍴 Meal | 📶 WiFi | 🎬 Ent.") # In-flight services
+                                st.caption("🍴 Meal | 🎒 15kg | 📶 WiFi")
                             
                             m1, m2, m3 = st.columns(3)
-                            m1.metric("🛫 Departure", dep_time)
+                            m1.metric("🛫 Departure", d_time)
                             m2.metric("⌛ Duration", duration)
                             m3.metric("💰 Price", f"₹{price}")
                             
-                            st.write(f"📍 {stops_text} | Arrival: {arr_time}")
+                            st.write(f"📍 {num_stops} | Arrival: {a_time} at {dest}")
                             
                             b1, b2 = st.columns(2)
-                            b1.link_button(f"✈️ Book Flight", f"https://www.google.com/flights")
-                            b2.link_button(f"🏨 Hotels in {dest}", f"https://www.booking.com/searchresults.html?ss={dest}")
+                            b1.link_button(f"✈️ Book Now", f"https://www.google.com/flights")
+                            b2.link_button(f"🏨 Hotels", f"https://www.booking.com/searchresults.html?ss={dest}")
                             st.markdown("---")
                 else:
-                    st.warning("Maaf kijiye, koi flight nahi mili.")
+                    st.warning("Maaf kijiye, flights nahi mili.")
