@@ -5,7 +5,7 @@ import google.generativeai as genai
 # --- APNI KEYS YAHAN BHAREIN (Puraani vali hi use karein) ---
 AMADEUS_KEY = "iAo2G7nXdvKgiZzp011sEHZc6HAmPQ8C"
 AMADEUS_SECRET = "yxG7clA4v002gkZG"
-GEMINI_KEY = "AIzaSyBkuPUo-NcftsWPm1v3nv_xaAlHsnJuZrk"
+GEMINI_KEY = "AIzaSyCc9mYj-xpwK9nexV-GX4SQoxA-TqwbfKY"
 
 # Gemini AI Setup
 genai.configure(api_key=GEMINI_KEY)
