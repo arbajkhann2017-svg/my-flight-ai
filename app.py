@@ -25,49 +25,64 @@ def get_token():
 st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
-# --- 🤖 SMART AI SECTION (Enhanced) ---
-query = st.chat_input("Kahan jana hai? (Ex: Patna to Delhi 25 May)")
+# --- 🤖 SMART HYBRID SEARCH ---
+query = st.chat_input("Kahan jana hai? (Ex: Patna Delhi 25 May)")
 
 if query:
     with st.chat_message("user"):
         st.write(query)
 
-    # AI ko bilkul saaf instruction dena
-    prompt = f"User query: '{query}'. Provide ONLY the 3-letter Origin code, 3-letter Destination code, and Date in YYYY-MM-DD. Example: PAT DEL 2026-05-15. Use 2026-05-15 if date is missing."
+    # 1. PEHLE DIRECT CODES DHUNDNA (Fastest)
+    import re
+    words = query.upper().replace("TO", " ").split()
+    codes = [w for w in words if len(w) == 3]
+    date_match = re.search(r'\d{4}-\d{2}-\d{2}', query)
     
-    try:
-        with st.spinner('Aapki baat samajh raha hoon... ✨'):
-            response = model.generate_content(prompt)
-            # AI ke response ko saaf karna
-            raw_text = response.text.strip().replace('"', '').replace("'", "")
-            ai_response = raw_text.split()
-            
+    origin, dest, date = None, None, None
+    
+    if len(codes) >= 2:
+        origin, dest = codes[0], codes[1]
+        date = date_match.group(0) if date_match else "2026-05-15"
+    
+    # 2. AGAR CODES NAHI MILE, TOH AI SE PUCHNA
+    if not origin:
+        try:
+            prompt = f"Extract 'Origin Code', 'Dest Code', 'Date' (YYYY-MM-DD) from: '{query}'. Return ONLY 3 words. Ex: PAT DEL 2026-05-15"
+            ai_response = model.generate_content(prompt).text.strip().split()
             if len(ai_response) >= 3:
-                origin, dest, date = ai_response[0][:3].upper(), ai_response[1][:3].upper(), ai_response[2]
-                
-                token = get_token()
-                if token:
-                    url = f"https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode={origin}&destinationLocationCode={dest}&departureDate={date}&adults=1&currencyCode=INR&max=5"
-                    res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
-                    data = res.json()
+                origin, dest, date = ai_response[0].upper()[:3], ai_response[1].upper()[:3], ai_response[2]
+        except:
+            # Agar AI fail ho jaye (Busy error), toh simple message dena
+            st.error("Kripya shehar ke 3-letter codes likhein (Ex: PAT DEL 2026-05-15)")
 
-                    with st.chat_message("assistant"):
-                        if "data" in data and len(data["data"]) > 0:
-                            st.success(f"✅ {origin} ➔ {dest} ki deals:")
-                            for flight in data["data"]:
-                                price = flight['price']['total']
-                                with st.container():
-                                    c1, c2 = st.columns([3, 1])
-                                    with c1:
-                                        st.markdown(f"#### ✈️ Flight Deal")
-                                        st.caption(f"📅 Date: {date}")
-                                    with c2:
-                                        st.subheader(f"₹{price}")
-                                    st.link_button("✈️ Book Flight", "https://www.google.com/flights")
-                                    st.markdown("---")
-                        else:
-                            st.warning(f"Maaf kijiye, {origin} to {dest} ki flight nahi mili.")
+    # 3. FLIGHTS SEARCH KARNA
+    if origin and dest:
+        with st.spinner(f'Searching flights for {origin} ➔ {dest}...'):
+            token = get_token()
+            if token:
+                url = f"https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode={origin}&destinationLocationCode={dest}&departureDate={date}&adults=1&currencyCode=INR&max=5"
+                res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+                data = res.json()
+
+                if "data" in data and len(data["data"]) > 0:
+                    st.success(f"✅ {origin} se {dest} ki best deals:")
+                    for flight in data["data"]:
+                        price = flight['price']['total']
+                        with st.container():
+                            c1, c2 = st.columns([3, 1])
+                            with c1:
+                                st.markdown(f"#### ✈️ Flight Deal")
+                                st.caption(f"📅 Date: {date} | {origin} ➔ {dest}")
+                            with c2:
+                                st.subheader(f"₹{price}")
+                            
+                            b1, b2 = st.columns(2)
+                            with b1:
+                                st.link_button("✈️ Book Flight", f"https://www.google.com/flights")
+                            with b2:
+                                st.link_button(f"🏨 Hotels in {dest}", f"https://www.booking.com/searchresults.html?ss={dest}")
+                            st.markdown("---")
+                else:
+                    st.warning(f"Is date par {origin} se {dest} ke liye flights nahi mili.")
             else:
-                st.error("Please provide city names clearly (e.g., Patna to Delhi).")
-    except Exception as e:
-        st.error("AI thoda slow hai, kripya direct likhein: PAT DEL 2026-05-15")
+                st.error("API Key Issue! Please check Amadeus Keys.")
