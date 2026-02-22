@@ -27,10 +27,18 @@ st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
 
 query = st.chat_input("Kahan jana hai? (Example: Delhi to Patna on 15 May)")
-
-if query:
-    with st.chat_message("user"):
-        st.write(query)
+# Simple extraction (Direct Search)
+    import re
+    words = query.upper().replace("TO", " ").split()
+    codes = [w for w in words if len(w) == 3]
+    
+    if len(codes) >= 2:
+        origin, dest = codes[0], codes[1]
+        date_match = re.search(r'\d{4}-\d{2}-\d{2}', query)
+        date = date_match.group(0) if date_match else "2026-05-15"
+        
+        with st.spinner('Searching flights...'):
+            token = get_token()
 
     # AI Instruction for all routes
     prompt = f"Extract 'Origin City Code', 'Dest City Code', and 'Date' in YYYY-MM-DD format from: '{query}'. Return only 3 words separated by space, example: DEL PAT 2026-05-15"
