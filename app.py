@@ -25,98 +25,104 @@ def get_token():
 st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
-# --- 🤖 AEROSAVE AI: FULL COMPLETE EDITION (ALL FEATURES) ---
+# --- 🤖 AEROSAVE AI: GOOGLE TRAVEL REPLICA + EMAIL TRACKING ---
 import re, random, requests, json
 from datetime import datetime
 
-# 1. UI DESIGN & BRANDING
+# 1. PREMIUM GOOGLE UI STYLING
 st.markdown("""
     <style>
-    .main { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: white; }
-    .glass-card { background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
-    .section-header { background: rgba(0, 210, 255, 0.1); padding: 10px; border-radius: 12px; margin: 20px 0; text-align: center; border: 1px solid #00d2ff; }
-    .price-tag { color: #00ffcc; font-size: 1.6rem; font-weight: bold; }
-    .prediction-box { background: rgba(255, 165, 0, 0.15); border: 1px solid orange; padding: 15px; border-radius: 15px; margin-bottom: 20px; }
+    .main { background-color: #ffffff; color: #202124; }
+    .nav-bar { display: flex; gap: 15px; border-bottom: 1px solid #dadce0; padding: 10px 0; margin-bottom: 20px; overflow-x: auto; }
+    .nav-item { padding: 8px 16px; border: 1px solid #dadce0; border-radius: 20px; font-size: 0.9rem; cursor: pointer; white-space: nowrap; color: #1a73e8; font-weight: 500; }
+    .nav-active { background: #e8f0fe; border: 1px solid #1a73e8; }
+    .filter-bar { display: flex; gap: 8px; margin: 15px 0; overflow-x: auto; }
+    .chip { padding: 6px 14px; border: 1px solid #dadce0; border-radius: 8px; font-size: 0.85rem; color: #3c4043; background: white; white-space: nowrap; }
+    .google-card { border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; }
+    .price-green { color: #1e8e3e; font-size: 1.5rem; font-weight: bold; }
+    .prediction-box { background: #fff4e5; border-left: 5px solid #ffa000; padding: 12px; border-radius: 4px; color: #663c00; margin-bottom: 20px; font-size: 0.9rem; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. LOGIN SYSTEM (Created by Arbaj)
+# 2. LOGIN & EMAIL TRACKING
 if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
 if not st.session_state['logged_in']:
-    st.markdown("<h1 style='text-align:center;'>🔐 AeroSave Secure Access</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#00d2ff;'>Created by Arbaj</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#1a73e8;'>✈️ AeroSave AI Access</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#5f6368;'>Created by Arbaj</p>", unsafe_allow_html=True)
     with st.form("login"):
-        name = st.text_input("Full Name")
-        mob = st.text_input("Mobile Number (10 Digits)")
-        if st.form_submit_button("Access AeroSave AI"):
-            if name and len(mob) == 10:
-                st.session_state['logged_in'], st.session_state['user_name'] = True, name
+        u_name = st.text_input("Full Name")
+        u_email = st.text_input("Email ID (For Alerts)") # Naya Email Tracking
+        u_mob = st.text_input("Mobile Number")
+        if st.form_submit_button("Start Exploring"):
+            if u_name and "@" in u_email and len(u_mob) == 10:
+                st.session_state['logged_in'], st.session_state['user_name'] = True, u_name
+                print(f"📊 DATA COLLECTED: {u_name} | {u_email} | {u_mob}") # Lead generation data
                 st.rerun()
+            else: st.error("Please enter correct Name, Email, and 10-digit Mobile!")
     st.stop()
 
-# 3. SIDEBAR: VISA & BAGGAGE TOOLS
+# 3. TOP NAVIGATION (As in Pic)
+st.markdown("""
+    <div class="nav-bar">
+        <div class="nav-item">🧳 Travel</div><div class="nav-item">🧭 Explore</div>
+        <div class="nav-item nav-active">✈️ Flights</div><div class="nav-item">🏨 Hotels</div>
+        <div class="nav-item">🏠 Holiday rentals</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# 4. SIDEBAR TOOLS
 st.sidebar.markdown(f"### 👑 Created by Arbaj")
-st.sidebar.write(f"Verified: **{st.session_state['user_name']}**")
-st.sidebar.markdown("---")
-st.sidebar.subheader("🧰 Travel Utilities")
-show_visa = st.sidebar.checkbox("🌐 Visa Checker (Intl)")
-show_bags = st.sidebar.checkbox("🎒 Baggage Guide")
+st.sidebar.write(f"User: **{st.session_state['user_name']}**")
+v_check = st.sidebar.checkbox("🌐 Visa Checker")
+b_check = st.sidebar.checkbox("🎒 Baggage Guide")
 
-# 4. PRICE PREDICTION & SEARCH
+# 5. FILTERS BAR
+st.markdown("""<div class="filter-bar"><div class="chip">☰ All filters</div><div class="chip">🏷️ Under ₹2,000</div><div class="chip">⭐ 4+ rating</div></div>""", unsafe_allow_html=True)
+
+# 6. DYNAMIC SEARCH & PRICE PREDICTION
 query = st.chat_input("Ex: Patna to Delhi 20 March")
-
-def display_flight_complete(flight, tag):
-    price = int(float(flight['price']['total']))
-    itinerary = flight['itineraries'][0]
-    seg = itinerary['segments'][0]
-    carrier = seg['carrierCode']
-    
-    # FULL LABELS: Departure, Arrival, Duration
-    dep_t = datetime.strptime(seg['departure']['at'].split('T')[1][:5], "%H:%M").strftime("%I:%M %p")
-    arr_t = datetime.strptime(itinerary['segments'][-1]['arrival']['at'].split('T')[1][:5], "%H:%M").strftime("%I:%M %p")
-    dur = itinerary['duration'][2:].lower().replace('h', 'h ').replace('m', 'm')
-
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    if tag == "Cheapest": st.success("🏷️ Best Value Deal")
-    
-    c1, c2, c3 = st.columns([1, 2, 1.5])
-    with c1: st.image(f"https://s1.apideeplink.com/images/airlines/{carrier}.png", width=55)
-    with c2: st.markdown(f"**Airline: {carrier}**\n🎒 15kg | 🍴 Meal Included")
-    with c3: st.markdown(f"<p class='price-tag'>₹{price}</p>", unsafe_allow_html=True)
-
-    m1, m2, m3 = st.columns(3)
-    m1.write(f"🛫 **Departure:** {dep_t}")
-    m2.write(f"⌛ **Duration:** {dur}")
-    m3.write(f"🛬 **Arrival:** {arr_t}")
-    st.link_button("✈️ Book Now", "https://www.google.com/flights")
-    st.markdown('</div>', unsafe_allow_html=True)
-
 if query:
     token = get_token()
     if token:
-        with st.spinner('AeroSave AI by Arbaj is fetching live data...'):
-            url = f"https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=PAT&destinationLocationCode=DEL&departureDate=2026-03-20&adults=1&currencyCode=INR&max=10"
+        with st.spinner('AeroSave AI by Arbaj is tracking prices...'):
+            # Price Prediction Alert
+            hike = random.randint(1100, 2500)
+            st.markdown(f"<div class='prediction-box'>📈 <b>Price Prediction:</b> Rates for this route might increase by <b>₹{hike}</b> soon!</div>", unsafe_allow_html=True)
+
+            url = f"https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=PAT&destinationLocationCode=DEL&departureDate=2026-03-20&adults=1&currencyCode=INR&max=5"
             data = requests.get(url, headers={"Authorization": f"Bearer {token}"}).json()
 
             if "data" in data:
-                # 📊 PRICE PREDICTION BOX
-                hike = random.randint(1100, 2200)
-                st.markdown(f"<div class='prediction-box'>📈 <b>Price Alert:</b> Rates might increase by <b>₹{hike}</b> soon!</div>", unsafe_allow_html=True)
+                st.subheader(f"Flights near Jharkhand")
+                for f in data["data"]:
+                    p = int(float(f['price']['total']))
+                    carrier = f['itineraries'][0]['segments'][0]['carrierCode']
+                    dep = f['itineraries'][0]['segments'][0]['departure']['at'][11:16]
+                    dur = f['itineraries'][0]['duration'][2:].lower().replace('h', 'h ').replace('m', 'm')
+                    
+                    st.markdown(f"""
+                    <div class="google-card">
+                        <div>
+                            <div style="color:#1e8e3e; font-weight:bold; font-size:0.75rem;">GREAT PRICE</div>
+                            <h4 style="margin:4px 0;">{carrier} Airlines</h4>
+                            <div style="color:#5f6368; font-size:0.85rem; margin-bottom:8px;">
+                                4.2 ⭐ (1.2k reviews) • 📶 WiFi • 🍴 Meal Included
+                            </div>
+                            <div style="font-size:0.9rem; color:#202124;">
+                                🛫 <b>Dep:</b> {dep} • ⌛ <b>Dur:</b> {dur} • Non-stop
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span class="price-green">₹{p}</span><br>
+                            <small style="color:#5f6368;">per adult</small><br>
+                            <button style="background:#1a73e8; color:white; border:none; padding:6px 12px; border-radius:4px; margin-top:8px;">View prices</button>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                # Sorting Flights
-                all_f = sorted(data["data"], key=lambda x: float(x['price']['total']))
-                
-                # CHEAPEST SECTION
-                st.markdown("<div class='section-header'>⭐ Cheapest Flights Found by Arbaj</div>", unsafe_allow_html=True)
-                for f in all_f[:3]: display_flight_complete(f, "Cheapest")
-
-                # COSTLY SECTION
-                st.markdown("<div class='section-header'>💎 Premium & Costly Flights</div>", unsafe_allow_html=True)
-                for f in all_f[-2:]: display_flight_complete(f, "Premium")
-
-                # EXTRA INFO: VISA & BAGGAGE
-                if show_visa: st.info("🌍 **Visa:** Most Intl routes require E-Visa/On-Arrival for Indians.")
-                if show_bags: st.warning("🎒 **Baggage:** Standard 15kg Check-in & 7kg Cabin allowed.")
+# 7. EXTRA TOOLS
+if v_check: st.info("🌍 **Visa:** Indian citizens ke liye is route par On-Arrival available hai.")
+if b_check: st.warning("🎒 **Baggage:** 15kg Check-in + 7kg Cabin allowed.")
 
 st.markdown("---")
-st.markdown("<p style='text-align: center;'>Verified by <b>Arbaj</b> | AeroSave AI 2026</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color:#5f6368;'>Verified by <b>Arbaj</b> | © 2026 AeroSave AI</p>", unsafe_allow_html=True)
