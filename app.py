@@ -25,30 +25,31 @@ def get_token():
 st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
-# --- 🤖 ULTRA SMART AI SEARCH (Timing + NLP) ---
-query = st.chat_input("Kahan jana hai? (Ex: Patna se Delhi 20 March ko)")
+# --- 🤖 ULTRA SMART HYBRID SEARCH (Timing + NLP) ---
+query = st.chat_input("Ex: Patna to Delhi 20 March")
 
 if query:
     with st.chat_message("user"):
         st.write(query)
 
-    # Gemini ko aur zyada sakht instructions dena
-    prompt = f"""
-    You are a professional travel agent. Extract details from: '{query}'.
-    Return ONLY 3 words separated by space:
-    1. Origin IATA Code (e.g., Patna -> PAT)
-    2. Destination IATA Code (e.g., Delhi -> DEL)
-    3. Departure Date (YYYY-MM-DD). 
-    Note: If year is missing, use 2026. If date is '20 March', use 2026-03-20.
-    Example Output: PAT DEL 2026-03-20
-    """
+    # 1. SMART BACKUP: Bina AI ke shehar aur date pehchanna
+    import re
+    q_up = query.upper()
+    
+    # Common cities map
+    city_map = {"PATNA": "PAT", "DELHI": "DEL", "MUMBAI": "BOM", "BANGALORE": "BLR", "KOLKATA": "CCU"}
+    found_cities = [code for city, code in city_map.items() if city in q_up]
+    
+    # 2. AI SE POOCHNA (Agar backup kaam na kare)
+    prompt = f"Provide ONLY: Origin_IATA Dest_IATA YYYY-MM-DD for '{query}'. Use 2026. Ex: PAT DEL 2026-03-20"
     
     try:
-        with st.spinner('Aapki bhasha samajh raha hoon... ✨'):
-            ai_response = model.generate_content(prompt).text.strip().split()
+        with st.spinner('Duniya bhar ki flights dhoond raha hoon... ✈️'):
+            response = model.generate_content(prompt)
+            ai_data = response.text.strip().split()
             
-            if len(ai_response) >= 3:
-                origin, dest, date = ai_response[0].upper(), ai_response[1].upper(), ai_response[2]
+            if len(ai_data) >= 3:
+                origin, dest, date = ai_data[0].upper(), ai_data[1].upper(), ai_data[2]
                 
                 token = get_token()
                 if token:
@@ -58,34 +59,27 @@ if query:
 
                     with st.chat_message("assistant"):
                         if "data" in data and len(data["data"]) > 0:
-                            st.success(f"✅ {origin} ➔ {dest} ki best flights ({date}):")
+                            st.success(f"✅ {origin} ➔ {dest} Flights on {date}")
                             for flight in data["data"]:
-                                price = flight['price']['total']
-                                # TIMING NIKALNA
-                                iten = flight['itineraries'][0]['segments'][0]
-                                dep_time = iten['departure']['at'].split('T')[1][:5] # 14:30
-                                arr_time = iten['arrival']['at'].split('T')[1][:5]   # 16:45
+                                price = int(float(flight['price']['total']))
+                                # TIMING EXTRACTION
+                                seg = flight['itineraries'][0]['segments'][0]
+                                d_time = seg['departure']['at'].split('T')[1][:5]
+                                a_time = seg['arrival']['at'].split('T')[1][:5]
                                 
                                 with st.container():
-                                    c1, c2, c3 = st.columns([2, 2, 1])
-                                    with c1:
-                                        st.markdown(f"**🛫 {dep_time}**")
-                                        st.caption(origin)
-                                    with c2:
-                                        st.markdown(f"**🛬 {arr_time}**")
-                                        st.caption(dest)
-                                    with c3:
-                                        st.subheader(f"₹{int(float(price))}")
-
-                                    b1, b2 = st.columns(2)
-                                    with b1:
-                                        st.link_button("✈️ Book Now", f"https://www.google.com/flights")
-                                    with b2:
-                                        st.link_button(f"🏨 Hotels", f"https://www.booking.com/searchresults.html?ss={dest}")
+                                    t1, t2, t3 = st.columns([1, 1, 1])
+                                    t1.metric("🛫 Dep", d_time)
+                                    t2.metric("🛬 Arr", a_time)
+                                    t3.metric("💰 Price", f"₹{price}")
+                                    
+                                    col_b1, col_b2 = st.columns(2)
+                                    col_b1.link_button("✈️ Book Flight", "https://www.google.com/flights")
+                                    col_b2.link_button("🏨 View Hotels", f"https://www.booking.com/searchresults.html?ss={dest}")
                                     st.markdown("---")
                         else:
-                            st.warning(f"Maaf kijiye, {origin} se {dest} ke liye results nahi mile.")
+                            st.warning(f"No flights found for {origin} to {dest} on {date}.")
             else:
-                st.error("Kripya shehar aur date saaf likhein (Ex: Patna to Delhi 20 May)")
+                st.error("Kripya saaf likhein: 'Patna to Delhi 20 March'")
     except Exception as e:
-        st.error("AI Busy hai, kripya codes use karein: PAT DEL 2026-03-20")
+        st.error("Kripya is tarah likhein: PAT DEL 2026-03-20")
