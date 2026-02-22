@@ -25,39 +25,49 @@ def get_token():
 st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
-# --- 🤖 POWERFUL SMART SEARCH (Timing + NLP) ---
-query = st.chat_input("Ex: Patna to Delhi 20 March")
+# --- 🤖 ULTRA SMART SEARCH (AM/PM + Clear Examples) ---
+
+# Chat box mein examples likhe hain taaki log dekh kar samajh sakein
+query = st.chat_input("Ex: Patna to Delhi 20 March OR PAT BOM 2026-05-15")
 
 if query:
     with st.chat_message("user"):
         st.write(query)
 
     import re
-    # 1. PEHLE DIRECT CODES AUR DATE NIKALNA (Bina AI ke)
-    q_up = query.upper().replace("TO", " ")
-    city_codes = re.findall(r'\b[A-Z]{3}\b', q_up) # PAT, DEL jaise codes dhoondna
-    date_match = re.search(r'\d{4}-\d{2}-\d{2}', query) # 2026-03-20 dhoondna
+    from datetime import datetime
 
-    origin, dest, date = None, None, None
-
-    # Agar user ne codes diye hain (Ex: PAT DEL 2026-03-20)
-    if len(city_codes) >= 2:
-        origin, dest = city_codes[0], city_codes[1]
-        date = date_match.group(0) if date_match else "2026-03-20"
+    # 1. PEHLE KHUD DHUNDNA (City Detection)
+    q_up = query.upper()
+    cities = {"PATNA": "PAT", "DELHI": "DEL", "MUMBAI": "BOM", "KOLKATA": "CCU", "BANGALORE": "BLR", "CHENNAI": "MAA", "GOA": "GOI", "PAT": "PAT", "DEL": "DEL", "BOM": "BOM"}
     
-    # 2. AGAR CODES NAHI MILE, TOH AI SE HELP LENA
+    found_codes = []
+    for word in q_up.split():
+        clean_word = word.strip(",.?!")
+        if clean_word in cities:
+            found_codes.append(cities[clean_word])
+        elif len(clean_word) == 3 and clean_word.isalpha():
+            found_codes.append(clean_word)
+
+    found_codes = list(dict.fromkeys(found_codes))
+    origin, dest, date = None, None, "2026-05-15"
+
+    if len(found_codes) >= 2:
+        origin, dest = found_codes[0], found_codes[1]
+    
+    # 2. AI SE POOCHNA (Agar shehar nahi mile)
     if not origin:
         try:
-            prompt = f"Extract only IATA codes and date (YYYY-MM-DD) from: '{query}'. Output: ORIGIN DEST DATE. Use 2026 if no year."
+            prompt = f"Extract IATA codes and YYYY-MM-DD from: '{query}'. Return ONLY: ORIGIN DEST DATE. Ex: PAT DEL 2026-05-15"
             ai_res = model.generate_content(prompt).text.strip().split()
             if len(ai_res) >= 3:
                 origin, dest, date = ai_res[0].upper(), ai_res[1].upper(), ai_res[2]
         except:
-            st.error("AI Busy hai, kripya codes use karein: PAT DEL 2026-03-20")
+            st.error("Kripya shehar ke naam saaf likhein (Ex: Patna Delhi)")
 
-    # 3. FLIGHT RESULTS DIKHANA (With Timing)
+    # 3. RESULTS DIKHANA
     if origin and dest:
-        with st.spinner(f'Searching {origin} ➔ {dest} for {date}...'):
+        with st.spinner(f'Searching {origin} ➔ {dest}...'):
             token = get_token()
             if token:
                 url = f"https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode={origin}&destinationLocationCode={dest}&departureDate={date}&adults=1&currencyCode=INR&max=5"
@@ -65,26 +75,30 @@ if query:
                 data = res.json()
 
                 if "data" in data and len(data["data"]) > 0:
-                    st.success(f"✅ Flights mili hain! ({origin} to {dest})")
+                    st.success(f"✅ Flights for {origin} to {dest} on {date}")
                     for flight in data["data"]:
                         price = int(float(flight['price']['total']))
                         seg = flight['itineraries'][0]['segments'][0]
-                        # Flight timing nikalna
-                        d_time = seg['departure']['at'].split('T')[1][:5]
-                        a_time = seg['arrival']['at'].split('T')[1][:5]
+                        
+                        # --- TIME KO AM/PM MEIN BADALNA ---
+                        d_raw = seg['departure']['at'].split('T')[1][:5]
+                        a_raw = seg['arrival']['at'].split('T')[1][:5]
+                        
+                        dep_obj = datetime.strptime(d_raw, "%H:%M")
+                        arr_obj = datetime.strptime(a_raw, "%H:%M")
+                        
+                        dep_time = dep_obj.strftime("%I:%M %p") # 02:30 PM format
+                        arr_time = arr_obj.strftime("%I:%M %p")
                         
                         with st.container():
-                            # UI ko sundar dikhana metrics ke saath
-                            m1, m2, m3 = st.columns(3)
-                            m1.metric("🛫 Udne ka Time", d_time)
-                            m2.metric("🛬 Pahunchne ka Time", a_time)
-                            m3.metric("💰 Kiraya", f"₹{price}")
+                            c1, c2, c3 = st.columns(3)
+                            c1.metric("🛫 Departure", dep_time)
+                            c2.metric("🛬 Arrival", arr_time)
+                            c3.metric("💰 Price", f"₹{price}")
                             
                             b1, b2 = st.columns(2)
-                            b1.link_button("✈️ Ticket Book Karein", "https://www.google.com/flights")
-                            b2.link_button("🏨 Hotel Dekhein", f"https://www.booking.com/searchresults.html?ss={dest}")
+                            b1.link_button("✈️ Book Flight", "https://www.google.com/flights")
+                            b2.link_button("🏨 Hotels", f"https://www.booking.com/searchresults.html?ss={dest}")
                             st.markdown("---")
                 else:
-                    st.warning(f"Maaf kijiye, {origin} se {dest} ke liye flights nahi mili.")
-            else:
-                st.error("API Key ka issue hai. Amadeus Keys check karein.")
+                    st.warning("No flights found.")
