@@ -26,90 +26,95 @@ st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
 import folium
-import json
 from streamlit_folium import st_folium
 
-# 🎨 1. CLEAN INTERFACE ENGINE
+# 🎨 1. PURE CHAT UI DESIGN
 st.markdown("""
     <style>
-    .main { background-color: #f1f3f4; }
-    .stApp { max-width: 100%; }
-    .chat-bubble { background: white; border: 1px solid #dadce0; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .price-tag { color: #1e8e3e; font-weight: bold; font-size: 1.4rem; }
-    .roi-badge { background: #e6f4ea; color: #137333; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
-    .module-info { color: #1a73e8; font-size: 12px; font-weight: bold; }
-    .flight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; }
+    .main { background-color: #ffffff; }
+    .chat-container { max-width: 800px; margin: auto; }
+    .flight-card { background: #f8f9fa; border-radius: 12px; padding: 15px; border: 1px solid #eee; margin-bottom: 15px; }
+    .section-header { font-size: 14px; font-weight: bold; color: #5f6368; text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+    .price-sasti { color: #1e8e3e; font-weight: bold; font-size: 1.3rem; }
+    .price-premium { color: #d93025; font-weight: bold; font-size: 1.3rem; }
+    .timing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-top: 10px; padding: 10px 0; border-top: 1px solid #eef; }
+    .predict-box { background: #fff7e0; border-left: 5px solid #fbbc04; padding: 10px; font-size: 13px; border-radius: 4px; margin-bottom: 20px; }
+    .book-btn { width: 100%; background: #1a73e8; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
     """, unsafe_allow_html=True)
 
-# 🗺️ 2. TOP NAVIGATION BAR
-tabs = st.tabs(["✈️ Flights & Chat", "🌍 Explore Map", "🛂 Safety & Visa", "🏨 Hotels"])
+# 🧠 2. FRESH CHAT LOGIC (Purana info delete karne ke liye)
+if "last_query" not in st.session_state:
+    st.session_state.last_query = None
 
-# 💬 3. MAIN MODULE: FLIGHT CHAT & BUDGET INTELLIGENCE
-with tabs[0]:
-    st.subheader("✈️ AeroSave Flight Assistant")
+# Chat Search Bar at the Top
+query = st.chat_input("E.g. Patna to Delhi 20 March 2026")
+
+if query:
+    st.session_state.last_query = query
+
+# ✈️ 3. FLIGHT RESULTS DISPLAY (Sirf tab dikhega jab search hoga)
+if st.session_state.last_query:
+    current_q = st.session_state.last_query
+    st.markdown(f"### 🔍 Results for: {current_q}")
     
-    # Fresh Info Logic
-    if "chat_data" not in st.session_state:
-        st.session_state.chat_data = None
+    # Price Prediction Alert
+    st.markdown('<div class="predict-box">⚠️ <b>Price Prediction:</b> Based on history, prices are expected to rise by <b>₹3,007</b> in the next 4 hours.</div>', unsafe_allow_html=True)
 
-    if query := st.chat_input("Patna to Delhi 20 March 2026"):
-        st.session_state.chat_data = query
-        st.rerun()
+    col1, col2 = st.columns(2)
 
-    if st.session_state.chat_data:
-        st.info(f"Showing fresh results for: **{st.session_state.chat_data}**")
-        
-        # Advanced Data Architecture
-        flights = [
-            {"type": "Sasti", "air": "IndiGo 6E-2124", "p": "6,247", "dep": "06:20 AM", "arr": "08:10 AM", "roi": "92/100", "budget": "₹12,500"},
-            {"type": "Sasti", "air": "SpiceJet SG-847", "p": "6,500", "dep": "11:30 AM", "arr": "01:25 PM", "roi": "88/100", "budget": "₹13,200"},
-            {"type": "Premium", "air": "Air India Luxury", "p": "9,179", "dep": "02:45 PM", "arr": "04:30 PM", "roi": "75/100", "budget": "₹28,000"},
-            {"type": "Premium", "air": "Vistara Gold", "p": "12,450", "dep": "09:30 PM", "arr": "11:20 PM", "roi": "68/100", "budget": "₹35,000"}
+    # --- LEFT SIDE: SASTI FLIGHTS (CHEAPEST) ---
+    with col1:
+        st.markdown('<div class="section-header">📉 All Sasti Flights (Cheapest)</div>', unsafe_allow_html=True)
+        sasti_flights = [
+            {"air": "IndiGo 6E-2124", "p": "6,247", "dep": "06:20 AM", "arr": "08:10 AM", "dur": "1h 50m", "lug": "15kg", "v": "Free"},
+            {"air": "SpiceJet SG-847", "p": "6,500", "dep": "11:30 AM", "arr": "01:25 PM", "dur": "1h 55m", "lug": "15kg", "v": "Free"},
+            {"air": "Air India Exp", "p": "6,890", "dep": "05:15 PM", "arr": "07:15 PM", "dur": "2h 00m", "lug": "20kg", "v": "Free"}
         ]
-
-        for f in flights:
-            with st.container():
-                st.markdown(f"""
-                <div class="chat-bubble">
-                    <div style="display:flex; justify-content:space-between;">
-                        <span class="module-info">{f['type']} Flight | <span class="roi-badge">ROI: {f['roi']}</span></span>
-                        <span class="price-tag">₹{f['p']}</span>
-                    </div>
-                    <b>{f['air']}</b>
-                    <p style="font-size:11px; color:grey; margin:0;">Total Trip Cost (Est): <b>{f['budget']}</b></p>
-                    <div class="flight-grid">
-                        <div><small>TAKE OFF</small><br><b>{f['dep']}</b></div>
-                        <div><small>ARRIVAL</small><br><b>{f['arr']}</b></div>
-                        <div><button style="background:#1a73e8; color:white; border:none; padding:5px 15px; border-radius:5px; font-weight:bold;">Book</button></div>
-                    </div>
+        for f in sasti_flights:
+            st.markdown(f"""
+            <div class="flight-card">
+                <div style="display:flex; justify-content:space-between;"><b>{f['air']}</b> <span class="price-sasti">₹{f['p']}</span></div>
+                <div class="timing-grid">
+                    <div><small>TAKE OFF</small><br><b>{f['dep']}</b></div>
+                    <div><small>DUR</small><br><b>{f['dur']}</b></div>
+                    <div><small>ARR</small><br><b>{f['arr']}</b></div>
                 </div>
-                """, unsafe_allow_html=True)
-    else:
-        st.write("👋 Hello Arbaj! Destination aur date likhkar search karein.")
+                <small style="color:gray;">🧳 {f['lug']} | 🛂 Visa: {f['v']}</small>
+                <button class="book-btn">Book Now</button>
+            </div>
+            """, unsafe_allow_html=True)
 
-# 🌍 4. EXPLORE MODULE
-with tabs[1]:
-    st.subheader("Global Price Map")
-    m = folium.Map(location=[20, 70], zoom_start=2, tiles="CartoDB positron")
-    folium.Marker([1.35, 103.8], popup="Singapore: ₹24,030").add_to(m)
-    folium.Marker([28.6, 77.2], popup="Delhi: ₹2,284").add_to(m)
-    st_folium(m, width="100%", height=500)
-
-# 🛂 5. SAFETY & VISA MODULE
-with tabs[2]:
-    st.subheader("International Safety & Visa Status")
-    visa_data = [
-        {"p": "Dubai", "s": "95/100", "v": "E-Visa", "r": "Safe"},
-        {"p": "Thailand", "s": "82/100", "v": "Arrival", "r": "Caution"}
-    ]
-    for v in visa_data:
-        st.markdown(f"<div class='chat-bubble'><b>{v['p']}</b><br>Safety: {v['s']} | Visa: {v['v']}<br>Status: {v['r']}</div>", unsafe_allow_html=True)
-
-# 🏨 6. HOTELS MODULE
-with tabs[3]:
-    st.text_input("Enter city", "Ranchi")
-    st.markdown("<div class='chat-bubble'><b>Hotel Meera</b><br>Price: ₹708 | Rating: 4.0 ⭐</div>", unsafe_allow_html=True)
+    # --- RIGHT SIDE: COSTLY PREMIUM FLIGHTS ---
+    with col2:
+        st.markdown('<div class="section-header">💎 All Costly Premium Flights</div>', unsafe_allow_html=True)
+        premium_flights = [
+            {"air": "Air India Luxury", "p": "9,179", "dep": "10:40 AM", "arr": "12:25 PM", "dur": "1h 45m", "lug": "35kg", "v": "Free"},
+            {"air": "Vistara Gold", "p": "12,450", "dep": "02:45 PM", "arr": "04:30 PM", "dur": "1h 45m", "lug": "40kg", "v": "Free"},
+            {"air": "Vistara Platinum", "p": "15,200", "dep": "09:30 PM", "arr": "11:20 PM", "dur": "1h 50m", "lug": "45kg", "v": "Free"}
+        ]
+        for f in premium_flights:
+            st.markdown(f"""
+            <div class="flight-card" style="border-left: 4px solid #d93025;">
+                <div style="display:flex; justify-content:space-between;"><b>{f['air']}</b> <span class="price-premium">₹{f['p']}</span></div>
+                <div class="timing-grid">
+                    <div><small>TAKE OFF</small><br><b>{f['dep']}</b></div>
+                    <div><small>DUR</small><br><b>{f['dur']}</b></div>
+                    <div><small>ARR</small><br><b>{f['arr']}</b></div>
+                </div>
+                <small style="color:gray;">🧳 {f['lug']} | 🍱 Premium Meals | 🛂 Visa: {f['v']}</small>
+                <button class="book-btn" style="background:#d93025;">Book Premium</button>
+            </div>
+            """, unsafe_allow_html=True)
+else:
+    # Default Welcome Screen
+    st.markdown("""
+    <div style="text-align:center; padding-top:100px; color:#5f6368;">
+        <h1 style="font-size:3rem;">✈️</h1>
+        <h2>AeroSave AI Chat</h2>
+        <p>Hello Arbaj! Patna to Delhi 20 March 2026 likhkar search karein.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("---")
-st.caption("AeroSave v190.0 | ROI Engine | Arbaj Edition")
+st.caption("AeroSave v200.0 | Pure Chat Interface | Developed for Arbaj")
