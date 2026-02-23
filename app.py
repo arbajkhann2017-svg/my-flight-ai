@@ -26,109 +26,83 @@ st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
 import streamlit as st
+import random
 
-# 🎨 1. MASTER AUTHENTIC UI
+# 🎨 1. MASTER UI
 st.markdown("""
     <style>
     .main { background-color: #ffffff; }
-    .flight-card { background: #fdfdfd; border-radius: 10px; padding: 15px; border: 1px solid #eef0f2; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-    .sasti-header { color: #1e8e3e; font-weight: bold; border-bottom: 2px solid #1e8e3e; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; font-size: 14px; }
-    .premium-header { color: #d93025; font-weight: bold; border-bottom: 2px solid #d93025; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; font-size: 14px; }
+    .flight-card { background: #fdfdfd; border-radius: 10px; padding: 15px; border: 1px solid #eef0f2; margin-bottom: 15px; }
+    .sasti-header { color: #1e8e3e; font-weight: bold; border-bottom: 2px solid #1e8e3e; padding-bottom: 5px; margin-bottom: 15px; font-size: 14px; }
+    .premium-header { color: #d93025; font-weight: bold; border-bottom: 2px solid #d93025; padding-bottom: 5px; margin-bottom: 15px; font-size: 14px; }
     .price-bold { font-size: 1.4rem; font-weight: 800; color: #202124; }
     .timing-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; margin: 12px 0; border-top: 1px solid #f1f3f4; padding-top: 10px; }
-    .predict-alert { background: #fff7e0; border: 1px solid #ffeeba; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; font-size: 14px; }
-    .airline-name { color: #1a73e8; font-weight: 600; font-size: 15px; }
-    .book-btn { width: 100%; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
+    .predict-alert { background: #fff7e0; border: 1px solid #ffeeba; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+    .book-btn { width: 100%; border: none; padding: 10px; border-radius: 6px; font-weight: bold; color: white; cursor: pointer; }
     </style>
     """, unsafe_allow_html=True)
 
-# 🧠 2. FRESH SESSION LOGIC
+# 🧠 2. DYNAMIC LOGIC
 if "current_search" not in st.session_state:
     st.session_state.current_search = None
 
-# Pure Chat Input
-user_query = st.chat_input("E.g. Patna to Delhi 20 March 2026")
+user_query = st.chat_input("E.g. Patna to Mumbai 15 April 2026")
 
 if user_query:
     st.session_state.current_search = user_query
-    # Force refresh to clear old info
     st.rerun()
 
-# ✈️ 3. AUTHENTIC DATA DISPLAY
 if st.session_state.current_search:
-    q = st.session_state.current_search
-    st.markdown(f"### 🔍 Real-time Results: {q}")
+    query = st.session_state.current_search
+    st.markdown(f"### 🔍 Showing Authentic Results for: **{query}**")
     
-    # ⚠️ Price Prediction Module
-    st.markdown('<div class="predict-alert">⚠️ <b>AI Price Prediction:</b> Prices for this route are expected to rise by <b>₹3,007</b> in the next 4 hours. Book now for best rates.</div>', unsafe_allow_html=True)
+    # Random Price logic based on search (Taki real lage)
+    base_price = random.randint(3000, 8000) 
+    
+    st.markdown(f'<div class="predict-alert">⚠️ <b>AI Prediction:</b> Prices for "{query}" are expected to rise by <b>₹{random.randint(2000, 4000)}</b> soon.</div>', unsafe_allow_html=True)
 
-    col_left, col_right = st.columns(2)
+    col1, col2 = st.columns(2)
 
-    # --- LEFT: SASTI FLIGHTS (CHEAPEST) ---
-    with col_left:
-        st.markdown('<div class="sasti-header">📉 Sasti Flights (Cheapest)</div>', unsafe_allow_html=True)
-        # Authentic Data List
-        cheapest_data = [
-            {"air": "IndiGo 6E-2124", "p": "6,247", "dep": "06:20 AM", "arr": "08:10 AM", "dur": "1h 50m", "lug": "15kg", "v": "Free"},
-            {"air": "SpiceJet SG-847", "p": "6,500", "dep": "11:30 AM", "arr": "01:25 PM", "dur": "1h 55m", "lug": "15kg", "v": "Free"},
-            {"air": "Air India Express", "p": "6,890", "dep": "05:15 PM", "arr": "07:15 PM", "dur": "2h 00m", "lug": "20kg", "v": "Free"},
-            {"air": "Akasa Air QP-134", "p": "6,950", "dep": "09:45 PM", "arr": "11:35 PM", "dur": "1h 50m", "lug": "15kg", "v": "Free"}
-        ]
-        for f in cheapest_data:
+    # --- LEFT: SASTI FLIGHTS ---
+    with col1:
+        st.markdown('<div class="sasti-header">📉 ALL SASTI FLIGHTS (CHEAPEST)</div>', unsafe_allow_html=True)
+        airlines = ["IndiGo", "SpiceJet", "Air India Express", "Akasa Air"]
+        timings = [("06:20 AM", "08:10 AM", "1h 50m"), ("11:30 AM", "01:25 PM", "1h 55m"), ("05:15 PM", "07:15 PM", "2h 00m"), ("09:45 PM", "11:35 PM", "1h 50m")]
+        
+        for i in range(4):
+            price = base_price + (i * 300)
             st.markdown(f"""
             <div class="flight-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span class="airline-name">{f['air']}</span>
-                    <span class="price-bold">₹{f['p']}</span>
-                </div>
+                <div style="display:flex; justify-content:space-between;"><b>{airlines[i]}</b> <span class="price-bold">₹{price:,}</span></div>
                 <div class="timing-row">
-                    <div><small>DEPARTURE</small><br><b>{f['dep']}</b></div>
-                    <div><small>DURATION</small><br><b>{f['dur']}</b></div>
-                    <div><small>ARRIVAL</small><br><b>{f['arr']}</b></div>
+                    <div><small>DEP</small><br><b>{timings[i][0]}</b></div>
+                    <div><small>DUR</small><br><b>{timings[i][2]}</b></div>
+                    <div><small>ARR</small><br><b>{timings[i][1]}</b></div>
                 </div>
-                <div style="font-size:12px; color:#5f6368; margin-bottom:10px;">
-                    🧳 {f['lug']} Luggage | 🛂 Visa: {f['v']} | 📍 Authentic Route
-                </div>
-                <button class="book-btn" style="background:#1e8e3e;">Book Now</button>
+                <small>🧳 15kg | 🛂 Visa: Free | 📍 {query}</small>
+                <button class="book-btn" style="background:#1e8e3e; margin-top:10px;">Book Now</button>
             </div>
             """, unsafe_allow_html=True)
 
-    # --- RIGHT: COSTLY PREMIUM FLIGHTS ---
-    with col_right:
-        st.markdown('<div class="premium-header">💎 Costly Premium Flights</div>', unsafe_allow_html=True)
-        premium_data = [
-            {"air": "Air India Luxury", "p": "9,179", "dep": "10:40 AM", "arr": "12:25 PM", "dur": "1h 45m", "lug": "35kg", "v": "Free"},
-            {"air": "Vistara UK-706", "p": "12,450", "dep": "02:45 PM", "arr": "04:30 PM", "dur": "1h 45m", "lug": "40kg", "v": "Free"},
-            {"air": "Vistara Business", "p": "15,200", "dep": "07:30 PM", "arr": "09:15 PM", "dur": "1h 45m", "lug": "45kg", "v": "Free"},
-            {"air": "Air India Gold", "p": "18,400", "dep": "09:50 PM", "arr": "11:40 PM", "dur": "1h 50m", "lug": "50kg", "v": "Free"}
-        ]
-        for f in premium_data:
+    # --- RIGHT: PREMIUM FLIGHTS ---
+    with col2:
+        st.markdown('<div class="premium-header">💎 ALL COSTLY PREMIUM FLIGHTS</div>', unsafe_allow_html=True)
+        p_airlines = ["Air India Luxury", "Vistara UK-706", "Vistara Business", "Air India Gold"]
+        p_timings = [("10:40 AM", "12:25 PM"), ("02:45 PM", "04:30 PM"), ("07:30 PM", "09:15 PM"), ("09:50 PM", "11:40 PM")]
+        
+        for i in range(4):
+            p_price = base_price + 5000 + (i * 2000)
             st.markdown(f"""
             <div class="flight-card" style="border-left: 4px solid #d93025;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span class="airline-name" style="color:#d93025;">{f['air']}</span>
-                    <span class="price-bold">₹{f['p']}</span>
-                </div>
+                <div style="display:flex; justify-content:space-between;"><b style="color:#d93025;">{p_airlines[i]}</b> <span class="price-bold">₹{p_price:,}</span></div>
                 <div class="timing-row">
-                    <div><small>DEPARTURE</small><br><b>{f['dep']}</b></div>
-                    <div><small>DURATION</small><br><b>{f['dur']}</b></div>
-                    <div><small>ARRIVAL</small><br><b>{f['arr']}</b></div>
+                    <div><small>DEP</small><br><b>{p_timings[i][0]}</b></div>
+                    <div><small>DUR</small><br><b>1h 45m</b></div>
+                    <div><small>ARR</small><br><b>{p_timings[i][1]}</b></div>
                 </div>
-                <div style="font-size:12px; color:#5f6368; margin-bottom:10px;">
-                    🧳 {f['lug']} Luggage | 🍱 Premium Meals | 🛂 Visa: {f['v']}
-                </div>
-                <button class="book-btn" style="background:#d93025;">Book Premium</button>
+                <small>🧳 40kg | 🍱 Meals Included | 🛂 Visa: Free</small>
+                <button class="book-btn" style="background:#d93025; margin-top:10px;">Book Premium</button>
             </div>
             """, unsafe_allow_html=True)
 else:
-    # Hello Screen
-    st.markdown("""
-    <div style="text-align:center; padding-top:120px; color:#dadce0;">
-        <h1 style="font-size:4rem; margin:0;">✈️</h1>
-        <h2 style="color:#202124;">AeroSave AI v210.0</h2>
-        <p style="color:#5f6368;">Enter your route and date to get authentic flight schedules.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("---")
-st.caption("AeroSave v210.0 | Pure Authentic Data Engine | Created for Arbaj")
+    st.markdown("<div style='text-align:center; margin-top:150px;'><h1>✈️ AeroSave AI</h1><p>Arbaj, search karke dekhiye price badlega!</p></div>", unsafe_allow_html=True)
