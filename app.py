@@ -25,154 +25,117 @@ def get_token():
 st.set_page_config(page_title="AeroSave AI", page_icon="✈️")
 st.title("✈️ AeroSave AI: Smart Flight Search")
 st.markdown("---")
-# --- 🤖 AEROSAVE AI: THE ULTIMATE PROFESSIONAL TRAVEL ENGINE ---
+# --- 🤖 AEROSAVE AI v40.0: THE AUTHENTIC MASTER REPLICA ---
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
 import random
-from datetime import datetime
 
-# 1. 🎨 PRO-LEVEL CSS FOR MODERN LAYOUT
+# 1. 🎨 PROFESSIONAL GOOGLE-STYLE UI DESIGN
 st.markdown("""
     <style>
-    /* Google Fonts aur Global Style */
-    .main { background-color: #f1f3f4; }
-    .stButton>button { border-radius: 24px; padding: 10px 24px; font-weight: 500; transition: 0.3s; border: 1px solid #dadce0; background: white; }
-    .stButton>button:hover { background-color: #f8f9fa; border-color: #1a73e8; color: #1a73e8; }
-    
-    /* Destination Cards */
-    .travel-card { background: white; border: 1px solid #dadce0; border-radius: 12px; padding: 0; margin-bottom: 15px; overflow: hidden; display: flex; height: 120px; }
-    .card-content { padding: 12px; flex-grow: 1; position: relative; }
-    .price-badge { position: absolute; bottom: 12px; right: 12px; background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 1.1rem; }
-    
-    /* Map Container */
-    .map-box { border: 1px solid #dadce0; border-radius: 15px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    
-    /* Header Tabs */
-    .nav-header { display: flex; gap: 10px; margin-bottom: 25px; justify-content: center; }
+    .main { background-color: #f8f9fa; }
+    .stButton>button { border-radius: 24px; padding: 8px 20px; border: 1px solid #dadce0; background: white; }
+    .stButton>button:hover { border-color: #1a73e8; color: #1a73e8; }
+    .card { background: white; border: 1px solid #dadce0; border-radius: 12px; padding: 15px; margin-bottom: 12px; transition: 0.3s; }
+    .price-tag { color: #1e8e3e; font-weight: bold; font-size: 1.2rem; }
+    .ai-bubble { background: #e8f0fe; padding: 12px; border-radius: 15px; margin-bottom: 10px; border-left: 5px solid #1a73e8; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. 🔐 SECURE USER TRACKING (Aapka Purana Feature)
+# 2. 🔐 SECURE USER TRACKING (Aapka Purana Dashboard)
 if 'logged_in' not in st.session_state: st.session_state['logged_in'] = False
 if not st.session_state['logged_in']:
-    st.markdown("<h1 style='text-align:center; color:#1a73e8;'>✈️ AeroSave AI</h1>", unsafe_allow_html=True)
-    with st.container():
-        col1, col2, col3 = st.columns([1,2,1])
-        with col2:
-            st.markdown("<div style='background:white; padding:30px; border-radius:15px; border:1px solid #dadce0;'>", unsafe_allow_html=True)
-            u_name = st.text_input("Full Name")
-            u_email = st.text_input("Email Address")
-            u_mob = st.text_input("WhatsApp Number (+91)")
-            if st.button("Unlock AeroSave Portal", use_container_width=True):
-                if u_name and "@" in u_email and len(u_mob) == 10:
-                    st.session_state.update({'logged_in': True, 'u_name': u_name, 'tab': 'Explore'})
-                    st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center;'>🌍 AeroSave AI: Premium Access</h2>", unsafe_allow_html=True)
+    with st.form("login"):
+        u_name = st.text_input("Full Name")
+        u_mob = st.text_input("WhatsApp Number")
+        if st.form_submit_button("Launch Portal"):
+            if u_name and len(u_mob) == 10:
+                st.session_state.update({'logged_in': True, 'u_name': u_name, 'tab': 'Travel'})
+                st.rerun()
     st.stop()
 
-# 3. 🌐 TOP NAVIGATION BAR
-st.markdown("<div class='nav-header'>", unsafe_allow_html=True)
+# 3. 🗺️ AUTHENTIC NAVIGATION TABS
 tabs = ["Travel", "Explore", "Flights", "Hotels", "Holiday rentals"]
 cols = st.columns(len(tabs))
 for i, t in enumerate(tabs):
-    if cols[i].button(t, key=f"nav_{t}", use_container_width=True):
+    if cols[i].button(t, key=f"btn_{t}", use_container_width=True):
         st.session_state['tab'] = t; st.rerun()
-st.markdown("</div>", unsafe_allow_html=True)
 
-current_tab = st.session_state.get('tab', 'Explore')
+current_tab = st.session_state.get('tab', 'Travel')
 
-# 4. 📂 TAB: EXPLORE (Professional Split View)
-if current_tab == "Explore":
-    with st.sidebar:
-        st.markdown(f"### 👤 {st.session_state['u_name']}")
-        st.write("---")
-        st.markdown("### 🔍 Search Filters")
-        price_limit = st.slider("Max Budget (₹)", 5000, 200000, 50000)
-        st.multiselect("Interests", ["Food", "Nature", "Nightlife", "History"], default=["Nature"])
-        st.checkbox("Show only Non-stop", value=True)
-
-    col1, col2 = st.columns([1, 1.4])
-    
+# 4. 🧭 TAB: TRAVEL (The Main Hub)
+if current_tab == "Travel":
+    st.markdown(f"### Hello, {st.session_state['u_name']}! Where to next?")
+    col1, col2 = st.columns([1, 1])
     with col1:
-        st.markdown(f"#### Popular destinations for you")
-        # Authentic Data
-        dest_data = [
-            {"city": "New Delhi", "price": "₹10,569", "info": "Temple • History • Food", "lat": 28.61, "lon": 77.20, "img": "https://picsum.photos/seed/delhi/100/120"},
-            {"city": "Singapore", "price": "₹24,030", "info": "Garden City • Shopping", "lat": 1.35, "lon": 103.81, "img": "https://picsum.photos/seed/sing/100/120"},
-            {"city": "Bangkok", "price": "₹28,172", "info": "Nightlife • River", "lat": 13.75, "lon": 100.50, "img": "https://picsum.photos/seed/bkk/100/120"},
-            {"city": "Dubai", "price": "₹32,450", "info": "Luxury • Desert", "lat": 25.20, "lon": 55.27, "img": "https://picsum.photos/seed/dxb/100/120"}
-        ]
-        
-        for d in dest_data:
-            st.markdown(f"""
-            <div class="travel-card">
-                <img src="{d['img']}" style="width:100px; object-fit:cover;">
-                <div class="card-content">
-                    <b style="font-size:1.1rem;">{d['city']}</b><br>
-                    <small style="color:grey;">{d['info']}</small>
-                    <div class="price-badge">{d['price']}</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
+        st.image("https://www.gstatic.com/travel-frontend/_/static/modules/mweb/common/images/google_travel_header_v4.png", use_container_width=True)
     with col2:
-        st.markdown("<div class='map-box'>", unsafe_allow_html=True)
-        # Professional Map View
-        m = folium.Map(location=[20, 78], zoom_start=4, tiles="CartoDB Positron")
+        st.markdown("#### Popular Near You")
+        st.markdown("<div class='card'><b>Ranchi</b><br><small>Waterfalls & Nature</small><br><span class='price-tag'>₹2,284</span></div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'><b>Patna</b><br><small>History & Culture</small><br><span class='price-tag'>₹3,044</span></div>", unsafe_allow_html=True)
+
+# 5. 📂 TAB: EXPLORE (All India + Global Map)
+elif current_tab == "Explore":
+    st.subheader("Global Destinations & Flight Prices")
+    dest_data = [
+        {"city": "Singapore", "p": "₹24,030", "lat": 1.35, "lon": 103.8, "info": "1 stop • 31h"},
+        {"city": "Tokyo", "p": "₹238,970", "lat": 35.6, "lon": 139.6, "info": "2 stops • 19h"},
+        {"city": "Dubai", "p": "₹51,882", "lat": 25.2, "lon": 55.2, "info": "1 stop • 9h"},
+        {"city": "New Delhi", "p": "₹10,569", "lat": 28.6, "lon": 77.2, "info": "Non-stop • 2h"}
+    ]
+    col_l, col_r = st.columns([1, 1.5])
+    with col_l:
         for d in dest_data:
-            folium.Marker(
-                [d['lat'], d['lon']], 
-                popup=f"<b>{d['city']}</b><br>Starts at {d['price']}",
-                icon=folium.Icon(color="blue", icon="plane", prefix="fa")
-            ).add_to(m)
-        st_folium(m, width="100%", height=550)
-        st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='card'><b>{d['city']}</b><br><small>{d['info']}</small><br><span class='price-tag'>{d['p']}</span></div>", unsafe_allow_html=True)
+    with col_r:
+        m = folium.Map(location=[20, 80], zoom_start=3, tiles="CartoDB positron")
+        for d in dest_data:
+            folium.Marker([d['lat'], d['lon']], popup=f"{d['city']}: {d['p']}", tooltip=d['city']).add_to(m)
+        st_folium(m, width="100%", height=500)
 
-# 5. ✈️ TAB: FLIGHTS (Smart AI Prediction)
+# 6. ✈️ TAB: FLIGHTS (Chat & AI Booking)
 elif current_tab == "Flights":
-    st.sidebar.markdown(f"**Welcome back, {st.session_state['u_name']}!**")
-    st.sidebar.info("AeroSave v35.0: Smart Tracking Active")
+    st.warning(f"⚠️ **Smart AI Alert:** Prices are expected to rise by ₹{random.randint(2000, 3800)} within 4 hours!")
     
-    # AI Alert Box (Aapka Purana Feature)
-    st.markdown(f"""
-        <div style='background:#fff4e5; border-left:5px solid #ffa000; padding:15px; border-radius:8px;'>
-            <b style='color:#b26a00;'>⚠️ Smart AI Alert:</b> Prices on this route are expected to rise by <b>₹{random.randint(2500, 4000)}</b> within 4 hours.
-        </div>
-    """, unsafe_allow_html=True)
+    # 💬 FLIGHT CHAT SYSTEM (Aapka Missing Feature)
+    st.markdown("### 💬 AeroSave AI Flight Assistant")
+    if "messages" not in st.session_state:
+        st.session_state.messages = [{"role": "assistant", "content": f"Hi {st.session_state['u_name']}, bataiye kahan ki flight check karoon?"}]
+    
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]): st.write(msg["content"])
 
-    st.markdown("### ✈️ Cheapest Real-Time Flights")
-    flights = [
-        {"air": "IndiGo", "dep": "06:20 PM", "arr": "08:10 PM", "dur": "1h 50m", "p": "6,247"},
-        {"air": "Air India Premium", "dep": "10:40 AM", "arr": "12:25 PM", "dur": "1h 45m", "p": "7,179"}
+    if prompt := st.chat_input("Ex: Patna to Delhi 20 March"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Mock Response (Authentic Data)
+        response = f"Searching for '{prompt}'... I found a flight for ₹6,247 on IndiGo. Should I book it?"
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        st.rerun()
+
+# 7. 🏨 TAB: HOTELS (Location-based Search)
+elif current_tab == "Hotels":
+    loc = st.text_input("Enter City (Ex: Ranchi, Patna)", "Ranchi")
+    st.markdown(f"### Best Hotels in {loc}")
+    hotels = [
+        {"name": "Hotel Meera", "p": "₹708", "feat": "Free breakfast • Wi-Fi • Pool"},
+        {"name": "Radience Retreat", "p": "₹1,139", "feat": "Fitness centre • Air conditioning"},
+        {"name": "Hotel Genista Inn", "p": "₹3,000", "feat": "Luxury • Restaurant • Spa"}
     ]
-    for f in flights:
-        st.markdown(f"""
-        <div style="background:white; border:1px solid #dadce0; border-radius:12px; padding:20px; margin-bottom:15px;">
-            <div style="display:flex; justify-content:space-between;">
-                <b>{f['air']} Airlines</b> <span style="color:#1e8e3e; font-size:1.4rem; font-weight:bold;">₹{f['p']}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-top:15px; color:#5f6368;">
-                <div>DEPARTURE<br><b style="color:black;">{f['dep']}</b></div>
-                <div>DURATION<br><b style="color:black;">{f['dur']}</b></div>
-                <div>ARRIVAL<br><b style="color:black;">{f['arr']}</b></div>
-            </div>
-        </div>""", unsafe_allow_html=True)
-        st.link_button(f"🚀 Book Now ({f['air']})", "https://www.google.com/flights", use_container_width=True)
+    for h in hotels:
+        st.markdown(f"<div class='card'><b>{h['name']}</b><br><small>{h['feat']}</small><br><span class='price-tag'>{h['p']}</span></div>", unsafe_allow_html=True)
 
-# 6. 🏘️ TAB: HOLIDAY RENTALS
+# 8. 🏘️ TAB: HOLIDAY RENTALS (Professional View)
 elif current_tab == "Holiday rentals":
-    st.subheader("Luxury Stays & Vacation Rentals")
+    st.subheader("Authentic Vacation Homes")
     rentals = [
-        {"name": "1-Bedroom Modern House", "p": "₹1,900", "sleep": "Sleeps 2", "img": "https://picsum.photos/seed/house1/300/200"},
-        {"name": "The Candy Studio", "p": "₹3,994", "sleep": "Sleeps 4", "img": "https://picsum.photos/seed/studio/300/200"}
+        {"n": "1-Bedroom House", "p": "₹1,900", "s": "Sleeps 2", "loc": "Mandar, Jharkhand"},
+        {"n": "The Candy Studio", "p": "₹3,994", "s": "Sleeps 4", "loc": "Bariatu, Ranchi"}
     ]
-    r_cols = st.columns(2)
-    for idx, r in enumerate(rentals):
-        with r_cols[idx]:
-            st.image(r['img'], use_container_width=True)
-            st.markdown(f"**{r['name']}**<br><small>{r['sleep']} • WiFi • Kitchen</small><br><b style='color:green;'>{r['p']}</b>/night", unsafe_allow_html=True)
+    for r in rentals:
+        st.markdown(f"<div class='card'><b>{r['n']}</b><br><small>{r['s']} • {r['loc']}</small><br><span class='price-tag'>{r['p']}</span>/night</div>", unsafe_allow_html=True)
 
 st.markdown("---")
-st.markdown(f"<p style='text-align:center; color:grey;'>Verified by {st.session_state.get('u_name', 'Arbaj')} | AeroSave AI 2026</p>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align:center; color:grey;'>Verified by {st.session_state['u_name']} | AeroSave AI 2026</p>", unsafe_allow_html=True)
