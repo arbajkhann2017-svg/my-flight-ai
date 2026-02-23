@@ -29,103 +29,87 @@ import folium
 import json
 from streamlit_folium import st_folium
 
-# 🎨 1. ADVANCED UI ENGINE (Master Frontend)
+# 🎨 1. CLEAN INTERFACE ENGINE
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #dadce0; margin-bottom: 15px; }
-    .price-roi { color: #1e8e3e; font-weight: bold; font-size: 1.5rem; }
-    .module-tag { background: #e8f0fe; color: #1a73e8; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-right: 5px; }
-    .budget-pill { background: #e6f4ea; color: #137333; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
-    .itinerary-step { border-left: 2px solid #1a73e8; padding-left: 15px; margin-bottom: 10px; position: relative; }
+    .main { background-color: #f1f3f4; }
+    .stApp { max-width: 100%; }
+    .chat-bubble { background: white; border: 1px solid #dadce0; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .price-tag { color: #1e8e3e; font-weight: bold; font-size: 1.4rem; }
+    .roi-badge { background: #e6f4ea; color: #137333; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+    .module-info { color: #1a73e8; font-size: 12px; font-weight: bold; }
+    .flight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# 🗺️ 2. SYSTEM NAVIGATION
-tabs = ["Flights", "Explore", "Hotels", "Safety & Visa", "AI Planner"]
-selected_tab = st.sidebar.radio("Navigation Menu", tabs)
+# 🗺️ 2. TOP NAVIGATION BAR
+tabs = st.tabs(["✈️ Flights & Chat", "🌍 Explore Map", "🛂 Safety & Visa", "🏨 Hotels"])
 
-# ✈️ 3. FLIGHT EXPLORE & BUDGET MODULE
-if selected_tab == "Flights":
-    st.subheader("✈️ Flight & Budget Intelligence")
-    colA, colB = st.columns(2)
-    with colA: origin = st.text_input("Origin", "Patna")
-    with colB: budget_mode = st.selectbox("Budget Mode", ["Student", "Economy", "Luxury"])
+# 💬 3. MAIN MODULE: FLIGHT CHAT & BUDGET INTELLIGENCE
+with tabs[0]:
+    st.subheader("✈️ AeroSave Flight Assistant")
     
-    # Advanced Data Structure (Authentic Organize)
-    flights = [
-        {
-            "airline": "IndiGo 6E-2124", "price": "6,247", "dep": "06:20 PM", "arr": "08:10 PM",
-            "budget": {"total": "₹12,500", "roi": 92, "breakdown": "F: 6k, H: 4k, T: 2.5k"},
-            "type": "Sasti Flight"
-        },
-        {
-            "airline": "Vistara Gold", "price": "9,850", "dep": "10:40 AM", "arr": "12:25 PM",
-            "budget": {"total": "₹28,000", "roi": 78, "breakdown": "F: 10k, H: 15k, T: 3k"},
-            "type": "Premium"
-        }
-    ]
+    # Fresh Info Logic
+    if "chat_data" not in st.session_state:
+        st.session_state.chat_data = None
 
-    for f in flights:
-        st.markdown(f"""
-        <div class="card">
-            <span class="module-tag">{f['type']}</span> <span class="budget-pill">ROI: {f['budget']['roi']}/100</span>
-            <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                <b>{f['airline']}</b>
-                <span class="price-roi">₹{f['price']}</span>
-            </div>
-            <p style="font-size:12px; color:grey;">Estimated Total Trip Cost ({budget_mode}): <b>{f['budget']['total']}</b></p>
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); text-align:center; border-top:1px solid #eee; padding-top:10px;">
-                <div><small>DEPARTURE</small><br><b>{f['dep']}</b></div>
-                <div><small>ARRIVAL</small><br><b>{f['arr']}</b></div>
-                <div><button style="background:#1a73e8; color:white; border:none; border-radius:4px; padding:5px 15px;">Book</button></div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    if query := st.chat_input("Patna to Delhi 20 March 2026"):
+        st.session_state.chat_data = query
+        st.rerun()
 
-# 🌍 4. EXPLORE & TRENDING MODULE
-elif selected_tab == "Explore":
-    st.subheader("🌍 Trending Destinations & Visual Preview")
-    dest = [
-        {"city": "Singapore", "price": "₹24,030", "lat": 1.35, "lon": 103.8, "trend": "+12% Growth"},
-        {"city": "London", "price": "₹73,650", "lat": 51.5, "lon": -0.1, "trend": "+5% Growth"}
-    ]
+    if st.session_state.chat_data:
+        st.info(f"Showing fresh results for: **{st.session_state.chat_data}**")
+        
+        # Advanced Data Architecture
+        flights = [
+            {"type": "Sasti", "air": "IndiGo 6E-2124", "p": "6,247", "dep": "06:20 AM", "arr": "08:10 AM", "roi": "92/100", "budget": "₹12,500"},
+            {"type": "Sasti", "air": "SpiceJet SG-847", "p": "6,500", "dep": "11:30 AM", "arr": "01:25 PM", "roi": "88/100", "budget": "₹13,200"},
+            {"type": "Premium", "air": "Air India Luxury", "p": "9,179", "dep": "02:45 PM", "arr": "04:30 PM", "roi": "75/100", "budget": "₹28,000"},
+            {"type": "Premium", "air": "Vistara Gold", "p": "12,450", "dep": "09:30 PM", "arr": "11:20 PM", "roi": "68/100", "budget": "₹35,000"}
+        ]
+
+        for f in flights:
+            with st.container():
+                st.markdown(f"""
+                <div class="chat-bubble">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span class="module-info">{f['type']} Flight | <span class="roi-badge">ROI: {f['roi']}</span></span>
+                        <span class="price-tag">₹{f['p']}</span>
+                    </div>
+                    <b>{f['air']}</b>
+                    <p style="font-size:11px; color:grey; margin:0;">Total Trip Cost (Est): <b>{f['budget']}</b></p>
+                    <div class="flight-grid">
+                        <div><small>TAKE OFF</small><br><b>{f['dep']}</b></div>
+                        <div><small>ARRIVAL</small><br><b>{f['arr']}</b></div>
+                        <div><button style="background:#1a73e8; color:white; border:none; padding:5px 15px; border-radius:5px; font-weight:bold;">Book</button></div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+    else:
+        st.write("👋 Hello Arbaj! Destination aur date likhkar search karein.")
+
+# 🌍 4. EXPLORE MODULE
+with tabs[1]:
+    st.subheader("Global Price Map")
     m = folium.Map(location=[20, 70], zoom_start=2, tiles="CartoDB positron")
-    for d in dest: folium.Marker([d['lat'], d['lon']], popup=d['city']).add_to(m)
-    st_folium(m, width="100%", height=400)
-    
-    for d in dest:
-        st.markdown(f"<div class='card'><b>{d['city']}</b> | <small>{d['trend']}</small><br><span class='price-roi'>Starting {d['price']}</span></div>", unsafe_allow_html=True)
+    folium.Marker([1.35, 103.8], popup="Singapore: ₹24,030").add_to(m)
+    folium.Marker([28.6, 77.2], popup="Delhi: ₹2,284").add_to(m)
+    st_folium(m, width="100%", height=500)
 
 # 🛂 5. SAFETY & VISA MODULE
-elif selected_tab == "Safety & Visa":
-    st.subheader("🛂 Safety Scores & Entry Rules")
-    data = [
-        {"place": "Dubai", "safety": "95/100", "visa": "E-Visa (48h)", "rules": "No COVID restrictions"},
-        {"place": "Thailand", "safety": "82/100", "visa": "Visa on Arrival", "rules": "Passport validity 6 months"}
+with tabs[2]:
+    st.subheader("International Safety & Visa Status")
+    visa_data = [
+        {"p": "Dubai", "s": "95/100", "v": "E-Visa", "r": "Safe"},
+        {"p": "Thailand", "s": "82/100", "v": "Arrival", "r": "Caution"}
     ]
-    for d in data:
-        st.markdown(f"""
-        <div class="card">
-            <b>{d['place']}</b> <span class="module-tag" style="float:right;">Safety: {d['safety']}</span><br>
-            <small>🛂 Visa: {d['visa']}</small><br>
-            <small>📝 Entry Rules: {d['rules']}</small>
-        </div>
-        """, unsafe_allow_html=True)
+    for v in visa_data:
+        st.markdown(f"<div class='chat-bubble'><b>{v['p']}</b><br>Safety: {v['s']} | Visa: {v['v']}<br>Status: {v['r']}</div>", unsafe_allow_html=True)
 
-# 🗓️ 6. AI TRIP PLANNER MODULE
-elif selected_tab == "AI Planner":
-    st.subheader("🗓️ AI Personalized Itinerary")
-    days = [
-        {"day": "Day 1", "task": "Arrive at Delhi, Check-in at Hotel Meera, Evening at India Gate."},
-        {"day": "Day 2", "task": "Visit Red Fort & Chandni Chowk. Afternoon Flight back to Patna."},
-    ]
-    for d in days:
-        st.markdown(f"""
-        <div class="itinerary-step">
-            <b>{d['day']}</b><br><small>{d['task']}</small>
-        </div>
-        """, unsafe_allow_html=True)
+# 🏨 6. HOTELS MODULE
+with tabs[3]:
+    st.text_input("Enter city", "Ranchi")
+    st.markdown("<div class='chat-bubble'><b>Hotel Meera</b><br>Price: ₹708 | Rating: 4.0 ⭐</div>", unsafe_allow_html=True)
 
 st.markdown("---")
-st.caption("AeroSave v180.0 | ROI Engine | Arbaj Edition")
+st.caption("AeroSave v190.0 | ROI Engine | Arbaj Edition")
